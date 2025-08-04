@@ -1,0 +1,36 @@
+specVersion: v0.1.0
+package:
+  name: eth_invoice_substreams
+  version: v0.1.0
+
+imports:
+  ethcommon: https://spkg.io/streamingfast/ethereum-common-v0.3.0.spkg
+
+protobuf:
+  files:
+    - invoice_contract.proto
+  importPaths:
+    - ./proto
+  excludePaths:
+    - sf/substreams
+    - google
+
+binaries:
+  default:
+    type: wasm/rust-v1
+    file: ../../../target/wasm32-unknown-unknown/release/eth_invoice_substreams.wasm
+
+modules:
+  - name: map_invoice_contract_events
+    kind: map
+    initialBlock: 0
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0x1f98431c8ad98523631ae4a59f267346ea31f984
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:invoice_contract.v1.RemittanceEvents
+
+network: sepolia
