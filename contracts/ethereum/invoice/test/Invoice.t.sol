@@ -25,7 +25,8 @@ contract InvoiceTest is Test {
 
     // Test that a successful invoice payment works as expected
     function test_itWorks() public {
-        uint256 quoteIdHash = 123235432454;
+        uint256 quoteId = 123235432454;
+        bytes32 quoteIdHash = bytes32(quoteId);
         uint64 expiry = 5;
         uint256 amount = 100000;
         address recipient = address(0x3);
@@ -56,7 +57,8 @@ contract InvoiceTest is Test {
 
     // Test that payment reverts if the invoice has expired
     function test_RevertWhen_expiry_exceeded() public {
-        uint256 quoteIdHash = 123235432454;
+        uint256 quoteId = 123235432454;
+        bytes32 quoteIdHash = bytes32(quoteId);
         uint64 expiry = 5;
         uint256 amount = 100000;
         address recipient = address(0x3);
