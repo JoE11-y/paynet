@@ -8,14 +8,14 @@ pub mod functions {
     use super::INTERNAL_ERR;
     #[derive(Debug, Clone, PartialEq)]
     pub struct PayInvoice {
-        pub quote_id_hash: substreams::scalar::BigInt,
+        pub quote_id_hash: [u8; 32usize],
         pub expiry: substreams::scalar::BigInt,
         pub asset: Vec<u8>,
         pub amount: substreams::scalar::BigInt,
         pub payee: Vec<u8>,
     }
     impl PayInvoice {
-        const METHOD_ID: [u8; 4] = [196u8, 81u8, 210u8, 48u8];
+        const METHOD_ID: [u8; 4] = [190u8, 85u8, 224u8, 48u8];
         pub fn decode(
             call: &substreams_ethereum::pb::eth::v2::Call,
         ) -> Result<Self, String> {
@@ -25,7 +25,7 @@ pub mod functions {
             }
             let mut values = ethabi::decode(
                     &[
-                        ethabi::ParamType::Uint(256usize),
+                        ethabi::ParamType::FixedBytes(32usize),
                         ethabi::ParamType::Uint(64usize),
                         ethabi::ParamType::Address,
                         ethabi::ParamType::Uint(256usize),
@@ -37,14 +37,14 @@ pub mod functions {
             values.reverse();
             Ok(Self {
                 quote_id_hash: {
-                    let mut v = [0 as u8; 32];
-                    values
+                    let mut result = [0u8; 32];
+                    let v = values
                         .pop()
                         .expect(INTERNAL_ERR)
-                        .into_uint()
-                        .expect(INTERNAL_ERR)
-                        .to_big_endian(v.as_mut_slice());
-                    substreams::scalar::BigInt::from_unsigned_bytes_be(&v)
+                        .into_fixed_bytes()
+                        .expect(INTERNAL_ERR);
+                    result.copy_from_slice(&v);
+                    result
                 },
                 expiry: {
                     let mut v = [0 as u8; 32];
@@ -85,18 +85,7 @@ pub mod functions {
         pub fn encode(&self) -> Vec<u8> {
             let data = ethabi::encode(
                 &[
-                    ethabi::Token::Uint(
-                        ethabi::Uint::from_big_endian(
-                            match self.quote_id_hash.clone().to_bytes_be() {
-                                (num_bigint::Sign::Plus, bytes) => bytes,
-                                (num_bigint::Sign::NoSign, bytes) => bytes,
-                                (num_bigint::Sign::Minus, _) => {
-                                    panic!("negative numbers are not supported")
-                                }
-                            }
-                                .as_slice(),
-                        ),
-                    ),
+                    ethabi::Token::FixedBytes(self.quote_id_hash.as_ref().to_vec()),
                     ethabi::Token::Uint(
                         ethabi::Uint::from_big_endian(
                             match self.expiry.clone().to_bytes_be() {
@@ -160,44 +149,44 @@ pub mod events {
     pub struct Remittance {
         pub asset: Vec<u8>,
         pub payee: Vec<u8>,
-        pub invoice_id: substreams::scalar::BigInt,
+        pub invoice_id: [u8; 32usize],
         pub amount: substreams::scalar::BigInt,
         pub payer: Vec<u8>,
     }
     impl Remittance {
         const TOPIC_ID: [u8; 32] = [
-            113u8,
-            223u8,
-            65u8,
-            252u8,
-            186u8,
-            41u8,
-            163u8,
-            101u8,
-            164u8,
-            19u8,
-            134u8,
-            188u8,
-            94u8,
-            153u8,
-            19u8,
-            158u8,
-            70u8,
-            53u8,
-            51u8,
-            35u8,
-            142u8,
-            204u8,
-            27u8,
-            169u8,
+            249u8,
+            58u8,
+            174u8,
+            165u8,
+            141u8,
+            224u8,
             230u8,
-            211u8,
-            5u8,
-            23u8,
-            80u8,
-            22u8,
-            208u8,
-            6u8,
+            164u8,
+            202u8,
+            188u8,
+            73u8,
+            114u8,
+            49u8,
+            52u8,
+            125u8,
+            221u8,
+            47u8,
+            156u8,
+            133u8,
+            232u8,
+            71u8,
+            172u8,
+            247u8,
+            247u8,
+            93u8,
+            46u8,
+            244u8,
+            230u8,
+            165u8,
+            40u8,
+            44u8,
+            174u8,
         ];
         pub fn match_log(log: &substreams_ethereum::pb::eth::v2::Log) -> bool {
             if log.topics.len() != 4usize {
@@ -214,7 +203,7 @@ pub mod events {
         ) -> Result<Self, String> {
             let mut values = ethabi::decode(
                     &[
-                        ethabi::ParamType::Uint(256usize),
+                        ethabi::ParamType::FixedBytes(32usize),
                         ethabi::ParamType::Uint(256usize),
                     ],
                     log.data.as_ref(),
@@ -271,14 +260,14 @@ pub mod events {
                     .as_bytes()
                     .to_vec(),
                 invoice_id: {
-                    let mut v = [0 as u8; 32];
-                    values
+                    let mut result = [0u8; 32];
+                    let v = values
                         .pop()
                         .expect(INTERNAL_ERR)
-                        .into_uint()
-                        .expect(INTERNAL_ERR)
-                        .to_big_endian(v.as_mut_slice());
-                    substreams::scalar::BigInt::from_unsigned_bytes_be(&v)
+                        .into_fixed_bytes()
+                        .expect(INTERNAL_ERR);
+                    result.copy_from_slice(&v);
+                    result
                 },
                 amount: {
                     let mut v = [0 as u8; 32];

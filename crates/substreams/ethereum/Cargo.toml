@@ -8,14 +8,14 @@ name = "eth_invoice_substreams"
 crate-type = ["cdylib"]
 
 [dependencies]
-ethabi = "17"
-hex-literal = "0.3.4"
-num-bigint = "0.4"
-num-traits = "0.2.15"
-prost = "0.13.3"
-prost-types = "0.13.3"
-substreams = "0.6.0"
-substreams-ethereum = "0.10.2"
+ethabi = { workspace = true }
+hex-literal = { workspace = true }
+num-bigint = { workspace = true }
+num-traits = { workspace = true }
+prost = { workspace = true }
+prost-types = { workspace = true }
+substreams = { workspace = true }
+substreams-ethereum = { workspace = true }
 
 # Required so that ethabi > ethereum-types build correctly under wasm32-unknown-unknown
 [target.wasm32-unknown-unknown.dependencies]

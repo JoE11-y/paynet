@@ -19,8 +19,8 @@ pub struct RemittanceEvent {
     pub asset: ::prost::alloc::vec::Vec<u8>,
     #[prost(bytes="vec", tag="5")]
     pub payee: ::prost::alloc::vec::Vec<u8>,
-    #[prost(string, tag="6")]
-    pub invoice_id: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="6")]
+    pub invoice_id: ::prost::alloc::vec::Vec<u8>,
     #[prost(string, tag="7")]
     pub amount: ::prost::alloc::string::String,
     #[prost(bytes="vec", tag="8")]

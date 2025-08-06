@@ -1,7 +1,7 @@
 mod abi;
 mod pb;
-use hex_literal::hex;
 use pb::invoice_contract::v1::{RemittanceEvent, RemittanceEvents};
+use substreams::errors::Error;
 use substreams::Hex;
 use substreams_ethereum::pb::eth::v2 as eth;
 use substreams_ethereum::Event;
@@ -15,12 +15,13 @@ use substreams::scalar::BigDecimal;
 
 substreams_ethereum::init!();
 
-const INVOICE_TRACKED_CONTRACT: [u8; 20] = hex!("1f98431c8ad98523631ae4a59f267346ea31f984");
-
 #[substreams::handlers::map]
 fn map_invoice_contract_events(
+    contract_address: String,
     blk: eth::Block,
 ) -> Result<RemittanceEvents, substreams::errors::Error> {
+    verify_parameter(&contract_address)?;
+
     let mut remittance_events = Vec::new();
 
     remittance_events.append(
@@ -30,7 +31,9 @@ fn map_invoice_contract_events(
                 view.receipt
                     .logs
                     .iter()
-                    .filter(|log| log.address == INVOICE_TRACKED_CONTRACT)
+                    .filter(|log| {
+                        log.address == Hex::decode(&contract_address).expect("already validated")
+                    })
                     .filter_map(|log| {
                         if let Some(event) =
                             abi::invoice_contract::events::Remittance::match_and_decode(log)
@@ -41,7 +44,7 @@ fn map_invoice_contract_events(
                                 evt_block_number: blk.number,
                                 amount: event.amount.to_string(),
                                 asset: event.asset,
-                                invoice_id: event.invoice_id.to_string(),
+                                invoice_id: event.invoice_id.to_vec(),
                                 payee: event.payee,
                                 payer: event.payer,
                             });
@@ -55,4 +58,17 @@ fn map_invoice_contract_events(
     Ok(RemittanceEvents {
         events: remittance_events,
     })
+}
+
+pub fn verify_parameter(address: &str) -> Result<(), Error> {
+    let normalized = address.strip_prefix("0x").unwrap_or(address);
+    if normalized.len() != 40 {
+        return Err(Error::msg("invalid Ethereum address length"));
+    }
+    let decoded =
+        Hex::decode(normalized).map_err(|_| Error::msg("invalid Ethereum address hex format"))?;
+    if decoded.len() != 20 {
+        return Err(Error::msg("Ethereum address must be 20 bytes"));
+    }
+    Ok(())
 }
