@@ -14,7 +14,7 @@ contract InvoiceTest is Test {
 
     // Event expected to be emitted by InvoicePayment on payment
     event Remittance(
-        address indexed asset, address indexed payee, uint256 invoiceId, uint256 amount, address indexed payer
+        address indexed asset, address indexed payee, bytes32 invoiceId, uint256 amount, address indexed payer
     );
 
     // Deploy fresh contract and token before each test
@@ -39,7 +39,7 @@ contract InvoiceTest is Test {
         token.approve(address(invoicePayment), amount);
 
         // Compute expected invoice ID
-        uint256 invoiceId = uint256(keccak256(abi.encodePacked(quoteIdHash, expiry, uint256(2))));
+        bytes32 invoiceId = keccak256(abi.encodePacked(quoteIdHash, expiry, uint256(2)));
 
         // Expect the Remittance event to be emitted with these parameters
         vm.expectEmit(true, true, true, true);
